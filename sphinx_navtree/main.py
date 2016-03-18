@@ -13,7 +13,7 @@ Copyright © 2016 Kalle Tuure. Released under the MIT License.
 
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 import os
@@ -21,7 +21,7 @@ import shutil
 
 from docutils import nodes
 from sphinx import addnodes
-from sphinx.builders.html import StandaloneHTMLBuilder
+from sphinx.builders.html import StandaloneHTMLBuilder, SerializingHTMLBuilder
 from sphinx.errors import SphinxError
 
 
@@ -106,6 +106,8 @@ def setup(app):
 
 def init(app):
     if not isinstance(app.builder, StandaloneHTMLBuilder):
+        return
+    if isinstance(app.builder, SerializingHTMLBuilder):
         return
     app.connect('html-page-context', update_page_context)
     app.connect('build-finished', finish)
