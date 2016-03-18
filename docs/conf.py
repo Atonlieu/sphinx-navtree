@@ -64,7 +64,7 @@ html_theme_options = {}
 html_title = '%s %s documentation' % (project, version)
 html_short_title = _title
 
-html_context = {
+_context_config = {
     'master_doc': 'index',
     'display_github': False,
     'display_bitbucket': False,
@@ -149,4 +149,8 @@ texinfo_show_urls = 'footnote'
 
 def setup(app):
     app.add_stylesheet('https://static.goodtimes.fi/css/bintoro_rtd.css')
+    app.connect('html-page-context', html_page_context)
+
+def html_page_context(app, pagename, templatename, context, doctree):
+    context.update(_context_config)
 
