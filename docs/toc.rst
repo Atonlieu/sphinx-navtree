@@ -1,0 +1,9 @@
+========
+Contents
+========
+
+.. toctree::
+
+   manual
+   demo
+
