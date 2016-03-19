@@ -14,7 +14,7 @@ from sphinx_navtree import __version__
 
 extensions = ['sphinx_navtree']
 
-navtree_maxdepth = {'Demo Section': 2}
+navtree_maxdepth = {'Overview': 1, 'Demo Section': 2}
 navtree_shift = True
 navtree_root_links = True
 

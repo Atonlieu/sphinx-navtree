@@ -8,7 +8,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
 
 setup(
     name = 'sphinx-navtree',
-    version = '0.2.1',
+    version = '0.3.0',
     description = 'Navigation tree customization for Sphinx',
     long_description = '\n' + description,
     url = 'https://github.com/bintoro/sphinx-navtree',

@@ -13,7 +13,7 @@ Copyright © 2016 Kalle Tuure. Released under the MIT License.
 
 """
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
 
 
 import os
@@ -46,43 +46,82 @@ def get_navtree(app, pagename, collapse=True, **kwargs):
         maxdepth = {'default': maxdepth}
 
     toctree = app.env.get_toctree_for(pagename, app.builder, collapse=False, **kwargs)
+    navtree = addnodes.compact_paragraph()
+    navtree['toctree'] = True
+
+    for bullet_list, caption in iter_toctree(toctree):
+        process_toctree_list(navtree, bullet_list, caption, app,
+                             collapse, maxdepth, shift_toc, root_links)
 
     if shift_toc:
-        newtree = addnodes.compact_paragraph()
-        newtree['toctree'] = True
+        update_navtree_classes(navtree)
 
-    for top_level_node in toctree:
-        if not isinstance(top_level_node, nodes.bullet_list):
+    return app.builder.render_partial(navtree)['fragment']
+
+
+def iter_toctree(toctree):
+    iterator = iter(toctree)
+    caption = None
+    while True:
+        try:
+            top_level_node = next(iterator)
+            if isinstance(top_level_node, nodes.bullet_list):
+                yield (top_level_node, caption)
+                caption = None
+            elif isinstance(top_level_node, nodes.caption):
+                caption = top_level_node
+                continue
+            else:
+                raise NavtreeError("Expected a 'bullet_list' node, got '%s'"
+                                   % top_level_node.__class__.__name__)
+        except StopIteration:
+            break
+
+
+def process_toctree_list(navtree, bullet_list, caption, app,
+                         collapse, maxdepth, shift_toc, root_links, level=1):
+
+    for list_item in bullet_list.children:
+
+        if len(list_item) == 1: # Just a link, no sublist
             continue
-        for top_level_item in top_level_node.children:
-            node_count = len(top_level_item)
-            if node_count != 2:
-                raise NavtreeError("Expected top-level item with exactly 2 child nodes, got %d: %s"
-                                   % (node_count, top_level_item.children))
-            title_node = top_level_item[0][0]  # list_item > paragraph > reference
-            list_node = top_level_item[1]      # list_item > bullet_list
-            if not root_links:
-                # Use Text node.
-                title_node = title_node[0]
-            app.env._toctree_prune(node     = top_level_item,
-                                   depth    = 1 if shift_toc else 2,
-                                   maxdepth = maxdepth.get(title_node.astext(),
-                                                           maxdepth['default']),
-                                   collapse = collapse)
-            if shift_toc:
-                caption = nodes.caption(title_node.astext(), '', title_node)
-                if root_links:
-                    caption['classes'].append('link')
-                newtree += caption
-                newtree += list_node
+        if len(list_item) != 2:
+            raise NavtreeError("Expected 'list_item' with exactly 2 child nodes, got '%s' with %d: %s"
+                               % (list_item.__class__.__name__, len(list_item), list_item.children))
 
-    if shift_toc:
-        update_navtree_classes(newtree)
-        toctree = newtree
-    else:
-        app.env._toctree_prune(toctree, 1, 0, collapse)
+        title_node = list_item[0][0]  # list_item > paragraph > reference
+        list_node = list_item[1]      # list_item > bullet_list
+        if not root_links:
+            # Use the `Text` node instead of the enclosing `reference` object.
+            title_node = title_node[0]
+        if caption:
+            prune_depth = maxdepth.get(title_node.astext(),
+                                       maxdepth.get(caption.astext(),
+                                                    maxdepth['default']))
+        else:
+            prune_depth = maxdepth.get(title_node.astext(),
+                                       maxdepth['default'])
 
-    return app.builder.render_partial(toctree)['fragment']
+        app.env._toctree_prune(node     = list_item,
+                               depth    = level if shift_toc else level + 1,
+                               maxdepth = prune_depth,
+                               collapse = collapse)
+
+        if shift_toc and level == 1:
+            caption = nodes.caption(title_node.astext(), '', title_node)
+            if root_links:
+                caption['classes'].append('link')
+            navtree += caption
+            navtree += list_node
+
+        if level < 2:
+            process_toctree_list(navtree, list_node, None, app,
+                                 collapse, maxdepth, shift_toc, root_links, level=level+1)
+
+    if not shift_toc and level == 1:
+        if caption:
+            navtree += caption
+        navtree += bullet_list
 
 
 def update_navtree_classes(toctree, depth=1):

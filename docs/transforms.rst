@@ -90,9 +90,9 @@ The maximum depth is expressed as an integer. To specify a global value, simply 
 
 The pseudo-title ``'default'`` may be used to provide a default value for sections that are not in the dictionary. If there is no default, unspecified sections will use the value provided by the theme. If the theme doesn't provide a value, the extension will default to 3.
 
-As an example, the *Demo Section* area of this site limits the navigation depth to two levels:
+As an example, the *Demo Section* area of this site limits the navigation depth to two levels. The *Overview* page under *Manual* has a limit of one, preventing the menu item from expanding at all:
 
 .. code-block:: python
 
-    navtree_maxdepth = {'Demo Section': 2}
+    navtree_maxdepth = {'Overview': 1, 'Demo Section': 2}
 
